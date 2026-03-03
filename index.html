@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Peter M. Benzoni</title>
+  <meta
+    name="description"
+    content="Peter M. Benzoni – OSINT analyst, researcher, and builder of tools for investigating information operations, propaganda ecosystems, and platform dynamics."
+  />
+  <style>
+    :root {
+      --bg: #07110d;
+      --bg-soft: rgba(0, 0, 0, 0.28);
+      --panel: rgba(6, 18, 13, 0.86);
+      --line: rgba(124, 255, 170, 0.18);
+      --line-strong: rgba(124, 255, 170, 0.32);
+      --text: #eafff1;
+      --text-soft: rgba(226, 255, 236, 0.82);
+      --text-dim: rgba(191, 255, 212, 0.62);
+      --accent: #98ffbf;
+      --accent-2: #78efaa;
+      --shadow: rgba(100, 255, 154, 0.08);
+      --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      --sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --max: 1180px;
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(120, 239, 170, 0.10), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(120, 239, 170, 0.08), transparent 30%),
+        var(--bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.08;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(190, 255, 212, 0.16),
+        rgba(190, 255, 212, 0.16) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      z-index: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .wrap {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(to bottom, rgba(4, 12, 8, 0.85), rgba(4, 12, 8, 0.45));
+      border-bottom: 1px solid rgba(124, 255, 170, 0.10);
+    }
+
+    .topbar-inner {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.24em;
+      color: var(--text-dim);
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 18px rgba(152, 255, 191, 0.95);
+      animation: pulse 1.8s infinite;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .nav a {
+      border: 1px solid rgba(124, 255, 170, 0.14);
+      border-radius: 999px;
+      padding: 9px 14px;
+      color: var(--text-soft);
+      font-size: 14px;
+      transition: 180ms ease;
+    }
+
+    .nav a:hover {
+      border-color: var(--line-strong);
+      background: rgba(152, 255, 191, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .hero,
+    .panel,
+    .footer-panel {
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 18px 48px var(--shadow);
+      border-radius: var(--radius);
+    }
+
+    .hero {
+      margin-top: 22px;
+      padding: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.75fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(124, 255, 170, 0.22);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    h1 {
+      margin: 18px 0 0;
+      font-size: clamp(2.75rem, 6vw, 5rem);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      font-weight: 700;
+    }
+
+    .lede {
+      max-width: 820px;
+      margin: 18px 0 0;
+      color: var(--text-soft);
+      font-size: clamp(1rem, 1.4vw, 1.15rem);
+      line-height: 1.8;
+    }
+
+    .chips {
+      margin-top: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .chip {
+      border: 1px solid rgba(124, 255, 170, 0.16);
+      border-radius: 999px;
+      padding: 11px 16px;
+      color: var(--text-soft);
+      font-size: 14px;
+      background: rgba(8, 21, 16, 0.74);
+    }
+
+    .chip.link:hover {
+      border-color: var(--line-strong);
+      background: rgba(152, 255, 191, 0.08);
+    }
+
+    .radar {
+      position: relative;
+      width: min(100%, 390px);
+      aspect-ratio: 1 / 1;
+      margin-left: auto;
+      border-radius: 36px;
+      border: 1px solid rgba(124, 255, 170, 0.18);
+      background: linear-gradient(180deg, rgba(7, 21, 15, 0.96), rgba(4, 12, 9, 0.96));
+      overflow: hidden;
+      box-shadow: inset 0 0 48px rgba(124, 255, 170, 0.08);
+    }
+
+    .radar::before,
+    .radar::after {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      border-radius: 50%;
+      border: 1px solid rgba(142, 250, 184, 0.12);
+    }
+
+    .radar::after { inset: 58px; }
+
+    .radar .ring-3 {
+      position: absolute;
+      inset: 94px;
+      border-radius: 50%;
+      border: 1px solid rgba(142, 250, 184, 0.10);
+    }
+
+    .radar .cross-h,
+    .radar .cross-v {
+      position: absolute;
+      background: rgba(142, 250, 184, 0.10);
+    }
+
+    .radar .cross-h {
+      left: 22px;
+      right: 22px;
+      top: 50%;
+      height: 1px;
+      transform: translateY(-50%);
+    }
+
+    .radar .cross-v {
+      top: 22px;
+      bottom: 22px;
+      left: 50%;
+      width: 1px;
+      transform: translateX(-50%);
+    }
+
+    .sweep {
+      position: absolute;
+      inset: 22px;
+      border-radius: 50%;
+      animation: spin 7s linear infinite;
+    }
+
+    .sweep::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 44%;
+      height: 44%;
+      transform: translate(-50%, -100%);
+      transform-origin: bottom center;
+      border-top-left-radius: 999px;
+      border-top-right-radius: 999px;
+      background: linear-gradient(to top, rgba(142, 250, 184, 0), rgba(142, 250, 184, 0.14), rgba(142, 250, 184, 0.34));
+      filter: blur(1px);
+    }
+
+    .blip {
+      position: absolute;
+      border-radius: 50%;
+      background: #baffd1;
+      box-shadow: 0 0 16px rgba(186, 255, 209, 0.95);
+    }
+
+    .blip.one { width: 12px; height: 12px; right: 30%; top: 35%; }
+    .blip.two { width: 10px; height: 10px; left: 32%; bottom: 26%; background: #8efab8; }
+    .blip.three { width: 8px; height: 8px; left: 55%; top: 62%; background: #dffff0; }
+
+    .radar-label {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      border: 1px solid rgba(124, 255, 170, 0.14);
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .main {
+      margin: 22px 0;
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 22px;
+    }
+
+    .panel {
+      padding: 24px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(124, 255, 170, 0.10);
+    }
+
+    .section-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    h2 {
+      margin: 10px 0 0;
+      font-size: 1.7rem;
+    }
+
+    .status {
+      border: 1px solid rgba(124, 255, 170, 0.14);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .about {
+      color: var(--text-soft);
+      line-height: 1.8;
+      font-size: 1rem;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .card {
+      border: 1px solid rgba(124, 255, 170, 0.10);
+      border-radius: 20px;
+      padding: 18px;
+      background: var(--panel);
+      transition: 180ms ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(124, 255, 170, 0.20);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .role {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .org { color: var(--accent); margin-top: 4px; }
+
+    .period {
+      font-family: var(--mono);
+      color: var(--text-dim);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    ul.clean {
+      list-style: none;
+      padding: 0;
+      margin: 14px 0 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    ul.clean li {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 10px;
+      color: var(--text-soft);
+      line-height: 1.7;
+      font-size: 0.96rem;
+    }
+
+    ul.clean li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 11px;
+      box-shadow: 0 0 12px rgba(152, 255, 191, 0.72);
+    }
+
+    .stack {
+      display: grid;
+      gap: 22px;
+    }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .pill {
+      border: 1px solid rgba(124, 255, 170, 0.14);
+      background: rgba(10, 23, 18, 0.80);
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .list-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .list-item {
+      border: 1px solid rgba(124, 255, 170, 0.10);
+      background: rgba(7, 18, 14, 0.76);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: var(--text-soft);
+      line-height: 1.55;
+    }
+
+    .edu-card {
+      border: 1px solid rgba(124, 255, 170, 0.10);
+      background: rgba(7, 18, 14, 0.76);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--text-soft);
+      line-height: 1.65;
+    }
+
+    .edu-card strong {
+      display: block;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .footer-panel {
+      padding: 22px 24px;
+      margin-bottom: 28px;
+    }
+
+    .footer-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(152, 255, 191, 0.30);
+      background: rgba(152, 255, 191, 0.10);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 13px 18px;
+      font-weight: 600;
+      transition: 180ms ease;
+    }
+
+    .cta:hover {
+      transform: translateY(-1px);
+      background: rgba(152, 255, 191, 0.16);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .radar {
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .hero,
+      .panel,
+      .footer-panel {
+        border-radius: 22px;
+      }
+
+      .hero,
+      .panel,
+      .footer-panel {
+        padding: 20px;
+      }
+
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        width: 100%;
+      }
+
+      .nav a {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        Signal Board // Peter M. Benzoni
+      </div>
+      <nav class="nav" aria-label="Section navigation">
+        <a href="#about">About</a>
+        <a href="#experience">Experience</a>
+        <a href="#tools">Tools</a>
+        <a href="#writing">Writing</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">Open-Source Intelligence // Information Threat Analysis</div>
+          <h1>Peter M. Benzoni</h1>
+          <p class="lede">
+            Data analyst, researcher, and builder of tools for investigating propaganda,
+            platform dynamics, and authoritarian information operations. I work across
+            collection, normalization, analysis, and narrative interpretation.
+          </p>
+          <div class="chips">
+            <a class="chip link" href="mailto:benzonip@gmail.com">benzonip@gmail.com</a>
+            <span class="chip">Washington, DC</span>
+            <span class="chip">(515) 343-0082</span>
+          </div>
+        </div>
+
+        <div class="radar" aria-hidden="true">
+          <div class="cross-h"></div>
+          <div class="cross-v"></div>
+          <div class="ring-3"></div>
+          <div class="sweep"></div>
+          <div class="blip one"></div>
+          <div class="blip two"></div>
+          <div class="blip three"></div>
+          <div class="radar-label">Signal Tracking</div>
+        </div>
+      </div>
+    </section>
+
+    <main class="main">
+      <section class="panel" id="about">
+        <div class="panel-header">
+          <div>
+            <div class="section-tag">Current Mission Profile</div>
+            <h2>About</h2>
+          </div>
+          <div class="status">Status: Active</div>
+        </div>
+
+        <p class="about">
+          I work at the intersection of data engineering, digital investigation, and
+          information analysis. My work focuses on how influence operations move through
+          social platforms, search results, podcasts, broadcast ecosystems, and the wider
+          information environment. I build practical systems that help researchers move from
+          collection to normalization to analysis without losing context.
+        </p>
+
+        <div class="timeline" id="experience">
+          <article class="card">
+            <div class="card-top">
+              <div>
+                <div class="role">Senior Research Officer</div>
+                <div class="org">Alliance for Securing Democracy</div>
+              </div>
+              <div class="period">December 2022 – Present</div>
+            </div>
+            <ul class="clean">
+              <li>Leads data-driven tools spanning acquisition, storage, management, and analytical workflows.</li>
+              <li>Designs methodologies and investigations focused on information threats and influence operations.</li>
+              <li>Builds intelligence products and technical systems with internal and external partners.</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <div>
+                <div class="role">Data Analyst</div>
+                <div class="org">Atlas Public Policy</div>
+              </div>
+              <div class="period">January 2020 – September 2022</div>
+            </div>
+            <ul class="clean">
+              <li>Led development for ASD websites, dashboards, and public-facing data products.</li>
+              <li>Managed ETL, development operations, and technical delivery across research projects.</li>
+              <li>Wrote and reviewed proposals, briefs, presentations, and technical specifications.</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <div>
+                <div class="role">Development Consultant</div>
+                <div class="org">Accenture Federal Services</div>
+              </div>
+              <div class="period">June 2016 – January 2020</div>
+            </div>
+            <ul class="clean">
+              <li>Worked across the software-development lifecycle for USPS analytics products.</li>
+              <li>Built front-end features and troubleshot cross-team enterprise systems.</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <div>
+                <div class="role">Cybersecurity Associate</div>
+                <div class="org">U.S. Department of Energy</div>
+              </div>
+              <div class="period">August 2015 – May 2016</div>
+            </div>
+            <ul class="clean">
+              <li>Developed cyber-threat representation and distribution solutions.</li>
+              <li>Applied semantic-web and machine-learning methods to security problems.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <div class="stack">
+        <section class="panel">
+          <div class="section-tag">Focus Areas</div>
+          <div class="pills">
+            <span class="pill">Python</span>
+            <span class="pill">JavaScript</span>
+            <span class="pill">SQL</span>
+            <span class="pill">OSINT</span>
+            <span class="pill">ETL Pipelines</span>
+            <span class="pill">NLP</span>
+            <span class="pill">Azure</span>
+            <span class="pill">GitHub</span>
+            <span class="pill">Power BI</span>
+            <span class="pill">Tableau</span>
+            <span class="pill">D3</span>
+          </div>
+        </section>
+
+        <section class="panel" id="tools">
+          <div class="panel-header">
+            <div>
+              <div class="section-tag">Systems</div>
+              <h2>Selected Tools</h2>
+            </div>
+          </div>
+          <div class="list-grid">
+            <div class="list-item">The Information Laundromat</div>
+            <div class="list-item">Information Integrity Map</div>
+            <div class="list-item">State Media Profiles</div>
+            <div class="list-item">Hamilton 2.0</div>
+            <div class="list-item">TeleSUR Dataset</div>
+          </div>
+        </section>
+
+        <section class="panel" id="writing">
+          <div class="panel-header">
+            <div>
+              <div class="section-tag">Dossiers</div>
+              <h2>Selected Writing</h2>
+            </div>
+          </div>
+          <div class="list-grid">
+            <div class="list-item">Who's Reusing Russian State Media's Images?</div>
+            <div class="list-item">Media Vassalage</div>
+            <div class="list-item">Democracy Divided</div>
+            <div class="list-item">The Russian Propaganda Nesting Doll</div>
+            <div class="list-item">From Russia With Spin</div>
+            <div class="list-item">Push and Poll</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="section-tag">Briefings</div>
+              <h2>Talks & Workshops</h2>
+            </div>
+          </div>
+          <div class="list-grid">
+            <div class="list-item">The Russian Propaganda Nesting Doll</div>
+            <div class="list-item">Disinformation Laundering</div>
+            <div class="list-item">DIY Domain Fingerprinting (to Fight Propaganda!)</div>
+            <div class="list-item">Using Social Networks and Big Data to Fight Fascism</div>
+            <div class="list-item">How to Use the Information Laundromat</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="section-tag">Education</div>
+              <h2>Academic Background</h2>
+            </div>
+          </div>
+          <div class="list-grid">
+            <div class="edu-card">
+              <strong>University of California, Berkeley</strong>
+              M.S. in Information and Data Science<br />
+              <span class="period">Summer 2023 – Spring 2025</span>
+            </div>
+            <div class="edu-card">
+              <strong>Iowa State University</strong>
+              B.S. in Computer Engineering (Security & Networking)<br />
+              B.A. in Political Science & International Studies<br />
+              <span class="period">Fall 2011 – Spring 2016</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <section class="footer-panel" id="contact">
+      <div class="footer-grid">
+        <div>
+          <div class="section-tag">Open Channel</div>
+          <p class="about" style="margin: 10px 0 0; max-width: 760px;">
+            Available for research collaborations, technical builds, investigative methods,
+            and analytical consulting.
+          </p>
+        </div>
+        <a class="cta" href="mailto:benzonip@gmail.com">Initiate Contact</a>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
